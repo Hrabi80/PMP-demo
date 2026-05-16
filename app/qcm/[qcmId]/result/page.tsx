@@ -32,7 +32,7 @@ export default async function QcmResultPage({
     const attempt = await getAttemptResult(sp.attemptId)
     if (!attempt) notFound()
 
-    const answers = attempt.answers.map((a) => ({
+    const answers = attempt.answers.map((a: any) => ({
       questionText: a.question.questionText,
       options: a.question.options,
       selectedOptionIds: a.selectedOptionIds as string[],
