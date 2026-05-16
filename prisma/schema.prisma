@@ -1,0 +1,126 @@
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  PROFESSOR
+  STUDENT
+}
+
+enum QuestionType {
+  SINGLE_CHOICE
+  MULTIPLE_CHOICE
+}
+
+model User {
+  id              String    @id @default(cuid())
+  fullName        String
+  email           String    @unique
+  passwordHash    String
+  role            Role      @default(STUDENT)
+  specialityId    String?
+  specialityOther String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  speciality  Speciality?   @relation(fields: [specialityId], references: [id])
+  qcms        Qcm[]
+  attempts    QcmAttempt[]
+}
+
+model Speciality {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  classLevels ClassLevel[]
+  users       User[]
+  qcms        Qcm[]
+}
+
+model ClassLevel {
+  id           String   @id @default(cuid())
+  name         String
+  specialityId String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  speciality Speciality @relation(fields: [specialityId], references: [id], onDelete: Cascade)
+  qcms       Qcm[]
+}
+
+model Qcm {
+  id           String   @id @default(cuid())
+  title        String
+  description  String
+  year         Int
+  specialityId String
+  classLevelId String
+  professorId  String
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  speciality  Speciality   @relation(fields: [specialityId], references: [id])
+  classLevel  ClassLevel   @relation(fields: [classLevelId], references: [id])
+  professor   User         @relation(fields: [professorId], references: [id])
+  questions   QcmQuestion[]
+  attempts    QcmAttempt[]
+}
+
+model QcmQuestion {
+  id           String       @id @default(cuid())
+  qcmId        String
+  questionText String
+  type         QuestionType
+  order        Int
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+
+  qcm     Qcm              @relation(fields: [qcmId], references: [id], onDelete: Cascade)
+  options QcmOption[]
+  answers QcmAttemptAnswer[]
+}
+
+model QcmOption {
+  id         String   @id @default(cuid())
+  questionId String
+  text       String
+  isCorrect  Boolean  @default(false)
+  order      Int
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  question QcmQuestion @relation(fields: [questionId], references: [id], onDelete: Cascade)
+}
+
+model QcmAttempt {
+  id             String   @id @default(cuid())
+  qcmId          String
+  studentId      String?
+  guestName      String?
+  score          Int
+  totalQuestions Int
+  percentage     Float
+  createdAt      DateTime @default(now())
+
+  qcm     Qcm                @relation(fields: [qcmId], references: [id])
+  student User?              @relation(fields: [studentId], references: [id])
+  answers QcmAttemptAnswer[]
+}
+
+model QcmAttemptAnswer {
+  id               String @id @default(cuid())
+  attemptId        String
+  questionId       String
+  selectedOptionIds Json
+
+  attempt  QcmAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
+  question QcmQuestion @relation(fields: [questionId], references: [id])
+}
