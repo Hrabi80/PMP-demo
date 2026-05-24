@@ -4,6 +4,7 @@ import { useState } from "react"
 import { useRouter } from "next/navigation"
 import { submitAttempt } from "@/features/attempts/actions"
 import { routes } from "@/lib/routes"
+import { cn } from "@/lib/utils"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
@@ -64,16 +65,16 @@ export function QcmPlayer({ qcm }: { qcm: Qcm }) {
 
   return (
     <div className="space-y-6">
-      <div className="rounded-xl border bg-card p-5">
+      <div className="rounded-lg border bg-card p-6 shadow-lg shadow-primary/5">
         <div className="flex items-start justify-between gap-4">
           <div>
-            <h1 className="text-xl font-semibold">{qcm.title}</h1>
-            <p className="mt-1 text-sm text-muted-foreground">{qcm.description}</p>
+            <h1 className="text-3xl font-bold leading-tight">{qcm.title}</h1>
+            <p className="mt-2 text-lg leading-relaxed text-muted-foreground">{qcm.description}</p>
           </div>
           <Badge variant="secondary">by {qcm.professor.fullName}</Badge>
         </div>
-        <div className="mt-3 flex items-center gap-2 text-sm text-muted-foreground">
-          <CheckCircle2 className="h-4 w-4" />
+        <div className="mt-4 flex items-center gap-2 text-base font-medium text-muted-foreground">
+          <CheckCircle2 className="h-5 w-5" />
           {answeredCount} / {qcm.questions.length} answered
         </div>
       </div>
@@ -82,12 +83,12 @@ export function QcmPlayer({ qcm }: { qcm: Qcm }) {
         <Card key={q.id}>
           <CardHeader className="pb-3">
             <div className="flex items-start gap-3">
-              <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-medium text-primary-foreground">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground shadow-sm">
                 {idx + 1}
               </span>
               <div>
-                <CardTitle className="text-base leading-snug">{q.questionText}</CardTitle>
-                <Badge variant="outline" className="mt-1 text-xs">
+                <CardTitle className="text-2xl leading-snug">{q.questionText}</CardTitle>
+                <Badge variant="outline" className="mt-2">
                   {q.type === "SINGLE_CHOICE" ? "Single answer" : "Multiple answers"}
                 </Badge>
               </div>
@@ -101,15 +102,21 @@ export function QcmPlayer({ qcm }: { qcm: Qcm }) {
                   <button
                     key={o.id}
                     onClick={() => selectOption(q.id, o.id, q.type)}
-                    className={`w-full rounded-lg border px-4 py-2.5 text-left text-sm transition-colors ${
+                    className={`w-full rounded-lg border px-5 py-4 text-left text-lg font-medium leading-relaxed shadow-sm transition-colors ${
                       selected
-                        ? "border-primary bg-primary/10 text-primary"
-                        : "hover:border-primary/40 hover:bg-muted"
+                        ? "border-primary bg-primary/10 text-primary shadow-primary/10"
+                        : "bg-background hover:border-primary/40 hover:bg-muted"
                     }`}
                   >
-                    <div className="flex items-center gap-2">
-                      <span className={`flex h-4 w-4 shrink-0 items-center justify-center rounded-${q.type === "SINGLE_CHOICE" ? "full" : "sm"} border ${selected ? "border-primary bg-primary" : "border-muted-foreground"}`}>
-                        {selected && <span className="block h-2 w-2 rounded-full bg-white" />}
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={cn(
+                          "flex h-6 w-6 shrink-0 items-center justify-center border-2",
+                          q.type === "SINGLE_CHOICE" ? "rounded-full" : "rounded-sm",
+                          selected ? "border-primary bg-primary" : "border-muted-foreground/60 bg-card"
+                        )}
+                      >
+                        {selected && <span className="block h-3 w-3 rounded-full bg-white" />}
                       </span>
                       {o.text}
                     </div>
@@ -121,11 +128,11 @@ export function QcmPlayer({ qcm }: { qcm: Qcm }) {
         </Card>
       ))}
 
-      <div className="flex items-center justify-between rounded-xl border bg-card px-5 py-4">
-        <p className="text-sm text-muted-foreground">
+      <div className="flex items-center justify-between rounded-lg border bg-card px-6 py-5 shadow-lg shadow-primary/5">
+        <p className="text-base font-medium text-muted-foreground">
           {answeredCount < qcm.questions.length
             ? `${qcm.questions.length - answeredCount} question(s) unanswered`
-            : "All questions answered ✓"}
+            : "All questions answered"}
         </p>
         <Button onClick={handleSubmit} disabled={submitting} className="gap-1">
           <Send className="h-4 w-4" />

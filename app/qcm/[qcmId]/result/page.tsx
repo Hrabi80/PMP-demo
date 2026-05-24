@@ -32,14 +32,14 @@ export default async function QcmResultPage({
     const attempt = await getAttemptResult(sp.attemptId)
     if (!attempt) notFound()
 
-    const answers = attempt.answers.map((a: any) => ({
+    const answers = attempt.answers.map((a) => ({
       questionText: a.question.questionText,
       options: a.question.options,
       selectedOptionIds: a.selectedOptionIds as string[],
     }))
 
     return (
-      <div className="mx-auto max-w-2xl">
+      <div className="mx-auto max-w-4xl">
         <QcmResult
           qcmId={qcmId}
           qcmTitle={attempt.qcm.title}
@@ -72,7 +72,7 @@ export default async function QcmResultPage({
     })
 
     return (
-      <div className="mx-auto max-w-2xl">
+      <div className="mx-auto max-w-4xl">
         <QcmResult
           qcmId={qcmId}
           qcmTitle={qcm.title}

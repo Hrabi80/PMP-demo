@@ -59,12 +59,12 @@ export function QcmBrowser({
   return (
     <div className="space-y-6">
       {/* Filters */}
-      <div className="rounded-xl border bg-card p-4 space-y-3">
+      <div className="space-y-3 rounded-lg border bg-card p-5 shadow-lg shadow-primary/5">
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Speciality</Label>
+            <Label className="text-sm text-muted-foreground">Speciality</Label>
             <Select value={selectedSpeciality} onValueChange={(v) => { setSelectedSpeciality(v || "all"); setSelectedClassLevel("all") }}>
-              <SelectTrigger className="h-8">
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -74,9 +74,9 @@ export function QcmBrowser({
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Class Level</Label>
+            <Label className="text-sm text-muted-foreground">Class Level</Label>
             <Select value={selectedClassLevel} onValueChange={(v) => setSelectedClassLevel(v || "all")} disabled={selectedSpeciality === "all"}>
-              <SelectTrigger className="h-8">
+              <SelectTrigger className="w-full">
                 <SelectValue placeholder="All levels" />
               </SelectTrigger>
               <SelectContent>
@@ -86,9 +86,9 @@ export function QcmBrowser({
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Year</Label>
+            <Label className="text-sm text-muted-foreground">Year</Label>
             <Select value={yearFilter} onValueChange={(v) => setYearFilter(v || "all")}>
-              <SelectTrigger className="h-8">
+              <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -98,11 +98,11 @@ export function QcmBrowser({
             </Select>
           </div>
           <div className="space-y-1">
-            <Label className="text-xs text-muted-foreground">Search</Label>
+            <Label className="text-sm text-muted-foreground">Search</Label>
             <div className="relative">
-              <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
               <Input
-                className="h-8 pl-8 text-sm"
+                className="pl-10"
                 placeholder="Title or professor…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
@@ -114,7 +114,7 @@ export function QcmBrowser({
 
       {/* Results */}
       <div className="flex items-center justify-between">
-        <p className="text-sm text-muted-foreground">
+        <p className="text-base font-medium text-muted-foreground">
           {filtered.length} QCM{filtered.length !== 1 ? "s" : ""} found
         </p>
       </div>
@@ -130,19 +130,19 @@ export function QcmBrowser({
             <Card key={qcm.id} className="flex flex-col transition-shadow hover:shadow-md">
               <CardHeader className="pb-3">
                 <div className="flex items-start justify-between gap-2">
-                  <CardTitle className="text-base leading-snug">{qcm.title}</CardTitle>
+                  <CardTitle className="text-xl leading-snug">{qcm.title}</CardTitle>
                   <Badge variant="secondary" className="shrink-0">{qcm.year}</Badge>
                 </div>
-                <CardDescription className="line-clamp-2 text-xs">{qcm.description}</CardDescription>
+                <CardDescription className="line-clamp-2">{qcm.description}</CardDescription>
               </CardHeader>
               <CardContent className="flex flex-1 flex-col justify-between gap-3">
                 <div className="flex flex-wrap gap-1.5">
-                  <Badge variant="outline" className="gap-1 text-xs">
+                  <Badge variant="outline" className="gap-1">
                     <User className="h-3 w-3" /> {qcm.professor.fullName}
                   </Badge>
-                  <Badge variant="outline" className="text-xs">{qcm.speciality.name}</Badge>
-                  <Badge variant="outline" className="text-xs">{qcm.classLevel.name}</Badge>
-                  <Badge variant="outline" className="gap-1 text-xs">
+                  <Badge variant="outline">{qcm.speciality.name}</Badge>
+                  <Badge variant="outline">{qcm.classLevel.name}</Badge>
+                  <Badge variant="outline" className="gap-1">
                     <BookOpen className="h-3 w-3" /> {qcm._count.questions} questions
                   </Badge>
                 </div>

@@ -1,7 +1,6 @@
 "use client"
 
 import { useState } from "react"
-import { useRouter } from "next/navigation"
 import Link from "next/link"
 import { signup } from "@/features/auth/actions"
 import { routes } from "@/lib/routes"

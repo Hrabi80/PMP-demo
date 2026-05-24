@@ -5,6 +5,7 @@ import { redirect } from "next/navigation"
 import { prisma } from "@/lib/prisma"
 import { getSession } from "@/lib/auth"
 import { routes } from "@/lib/routes"
+import { getEnforceFiveQcmOptions } from "@/features/settings/actions"
 import { QuestionType } from "@prisma/client"
 
 type OptionInput = {
@@ -29,6 +30,19 @@ type QcmInput = {
   specialityId: string
   classLevelId: string
   questions: QuestionInput[]
+}
+
+const FIXED_OPTION_COUNT = 5
+
+async function validateQcmOptions(data: QcmInput) {
+  const enforceFiveOptions = await getEnforceFiveQcmOptions()
+
+  if (!enforceFiveOptions) return null
+
+  const invalidQuestionIndex = data.questions.findIndex((q) => q.options.length !== FIXED_OPTION_COUNT)
+  if (invalidQuestionIndex === -1) return null
+
+  return `Question ${invalidQuestionIndex + 1} must have exactly ${FIXED_OPTION_COUNT} options.`
 }
 
 export async function getQcms(specialityId?: string, classLevelId?: string) {
@@ -83,6 +97,9 @@ export async function createQcm(data: QcmInput) {
   const session = await getSession()
   if (!session || session.role !== "PROFESSOR") return { error: "Unauthorized" }
 
+  const optionError = await validateQcmOptions(data)
+  if (optionError) return { error: optionError }
+
   await prisma.qcm.create({
     data: {
       title: data.title,
@@ -118,6 +135,9 @@ export async function updateQcm(id: string, data: QcmInput) {
 
   const existing = await prisma.qcm.findUnique({ where: { id } })
   if (!existing || existing.professorId !== session.id) return { error: "Not found" }
+
+  const optionError = await validateQcmOptions(data)
+  if (optionError) return { error: optionError }
 
   // Delete existing questions (cascade deletes options)
   await prisma.qcmQuestion.deleteMany({ where: { qcmId: id } })

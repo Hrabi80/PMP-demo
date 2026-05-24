@@ -102,6 +102,12 @@ async function main() {
     },
   })
 
+  await prisma.platformSettings.upsert({
+    where: { id: "global" },
+    update: { enforceFiveQcmOptions: true },
+    create: { id: "global", enforceFiveQcmOptions: true },
+  })
+
   // --- QCMs ---
   const neurologyCL = classLevels.find(
     (cl) => cl.specialityId === neurology.id && cl.name === "Second Year"
@@ -140,6 +146,7 @@ async function main() {
                 { text: "Cerebellum", isCorrect: true, order: 2 },
                 { text: "Brainstem", isCorrect: false, order: 3 },
                 { text: "Thalamus", isCorrect: false, order: 4 },
+                { text: "Hypothalamus", isCorrect: false, order: 5 },
               ],
             },
           },
@@ -153,6 +160,7 @@ async function main() {
                 { text: "Spinal cord", isCorrect: true, order: 2 },
                 { text: "Peripheral nerves", isCorrect: false, order: 3 },
                 { text: "Autonomic ganglia", isCorrect: false, order: 4 },
+                { text: "Skeletal muscles", isCorrect: false, order: 5 },
               ],
             },
           },
@@ -166,6 +174,7 @@ async function main() {
                 { text: "Microglia", isCorrect: false, order: 2 },
                 { text: "Astrocytes", isCorrect: true, order: 3 },
                 { text: "Oligodendrocytes", isCorrect: false, order: 4 },
+                { text: "Schwann cells", isCorrect: false, order: 5 },
               ],
             },
           },
@@ -179,6 +188,7 @@ async function main() {
                 { text: "Serotonin", isCorrect: true, order: 2 },
                 { text: "GABA", isCorrect: false, order: 3 },
                 { text: "Norepinephrine", isCorrect: true, order: 4 },
+                { text: "Acetylcholine", isCorrect: false, order: 5 },
               ],
             },
           },
@@ -212,6 +222,7 @@ async function main() {
                 { text: "3", isCorrect: false, order: 2 },
                 { text: "4", isCorrect: true, order: 3 },
                 { text: "5", isCorrect: false, order: 4 },
+                { text: "6", isCorrect: false, order: 5 },
               ],
             },
           },
@@ -225,6 +236,7 @@ async function main() {
                 { text: "Aorta", isCorrect: true, order: 2 },
                 { text: "Pulmonary arteries", isCorrect: false, order: 3 },
                 { text: "Superior vena cava", isCorrect: false, order: 4 },
+                { text: "Inferior vena cava", isCorrect: false, order: 5 },
               ],
             },
           },
@@ -238,6 +250,7 @@ async function main() {
                 { text: "Right ventricle", isCorrect: false, order: 2 },
                 { text: "Left atrium", isCorrect: false, order: 3 },
                 { text: "Right atrium", isCorrect: true, order: 4 },
+                { text: "Interventricular septum", isCorrect: false, order: 5 },
               ],
             },
           },
@@ -251,6 +264,7 @@ async function main() {
                 { text: "Smoking", isCorrect: true, order: 2 },
                 { text: "High HDL cholesterol", isCorrect: false, order: 3 },
                 { text: "Diabetes mellitus", isCorrect: true, order: 4 },
+                { text: "Chronic hypertension", isCorrect: true, order: 5 },
               ],
             },
           },
@@ -284,6 +298,7 @@ async function main() {
                 { text: "Radius", isCorrect: true, order: 2 },
                 { text: "Humerus", isCorrect: false, order: 3 },
                 { text: "Carpals", isCorrect: false, order: 4 },
+                { text: "Scapula", isCorrect: false, order: 5 },
               ],
             },
           },
@@ -297,6 +312,7 @@ async function main() {
                 { text: "Infraspinatus", isCorrect: true, order: 2 },
                 { text: "Deltoid", isCorrect: false, order: 3 },
                 { text: "Teres minor", isCorrect: true, order: 4 },
+                { text: "Subscapularis", isCorrect: true, order: 5 },
               ],
             },
           },
@@ -310,6 +326,7 @@ async function main() {
                 { text: "C5–T1", isCorrect: true, order: 2 },
                 { text: "C1–C5", isCorrect: false, order: 3 },
                 { text: "C3–C7", isCorrect: false, order: 4 },
+                { text: "T2–T6", isCorrect: false, order: 5 },
               ],
             },
           },
@@ -323,6 +340,7 @@ async function main() {
                 { text: "Teres minor", isCorrect: true, order: 2 },
                 { text: "Biceps brachii", isCorrect: false, order: 3 },
                 { text: "Triceps brachii", isCorrect: false, order: 4 },
+                { text: "Supraspinatus", isCorrect: false, order: 5 },
               ],
             },
           },
