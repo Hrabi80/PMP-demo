@@ -16,7 +16,7 @@ import { Plus, Trash2, ChevronLeft, ChevronRight, Save } from "lucide-react"
 import { QuestionType } from "@prisma/client"
 
 type Option = { text: string; isCorrect: boolean; order: number }
-type Question = { questionText: string; type: QuestionType; order: number; options: Option[] }
+type Question = { questionText: string; type: QuestionType; points: number; order: number; options: Option[] }
 
 type Speciality = { id: string; name: string }
 type ClassLevel = { id: string; name: string; specialityId: string }
@@ -32,6 +32,7 @@ type ExistingQcm = {
     id: string
     questionText: string
     type: QuestionType
+    points: number
     order: number
     options: Array<{ id: string; text: string; isCorrect: boolean; order: number }>
   }>
@@ -59,6 +60,7 @@ function emptyQuestion(order: number): Question {
   return {
     questionText: "",
     type: "SINGLE_CHOICE",
+    points: 1,
     order,
     options: fixedOptions(),
   }
@@ -92,6 +94,7 @@ export function QcmForm({
       ? existingQcm.questions.map((q) => ({
           questionText: q.questionText,
           type: q.type,
+          points: q.points,
           order: q.order,
           options: enforceFiveOptions
             ? fixedOptions(q.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect, order: o.order })))
@@ -110,8 +113,13 @@ export function QcmForm({
     setQuestions((prev) => prev.filter((_, i) => i !== idx).map((q, i) => ({ ...q, order: i + 1 })))
   }
 
-  function updateQuestion(idx: number, field: keyof Question, value: string | QuestionType) {
+  function updateQuestion(idx: number, field: keyof Question, value: string | number | QuestionType) {
     setQuestions((prev) => prev.map((q, i) => (i === idx ? { ...q, [field]: value } : q)))
+  }
+
+  function updateQuestionPoints(idx: number, value: string) {
+    const parsed = Number.parseInt(value, 10)
+    updateQuestion(idx, "points", Number.isFinite(parsed) ? Math.max(1, parsed) : 1)
   }
 
   function addOption(qIdx: number) {
@@ -186,6 +194,13 @@ export function QcmForm({
         setLoading(false)
         return
       }
+    }
+
+    const invalidPointsIndex = data.questions.findIndex((q) => !Number.isFinite(q.points) || q.points <= 0)
+    if (invalidPointsIndex !== -1) {
+      setError(`Question ${invalidPointsIndex + 1} must have a positive point value.`)
+      setLoading(false)
+      return
     }
 
     const result = existingQcm
@@ -266,9 +281,23 @@ export function QcmForm({
           {questions.map((q, qIdx) => (
             <Card key={qIdx}>
               <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <CardTitle className="text-xl">Question {qIdx + 1}</CardTitle>
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2">
+                      <Label htmlFor={`question-${qIdx}-points`} className="text-sm text-muted-foreground">
+                        Points
+                      </Label>
+                      <Input
+                        id={`question-${qIdx}-points`}
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={q.points}
+                        onChange={(e) => updateQuestionPoints(qIdx, e.target.value)}
+                        className="h-8 w-20 px-2 text-center text-base"
+                      />
+                    </div>
                     <Select value={q.type} onValueChange={(v) => updateQuestion(qIdx, "type", (v as QuestionType) || "SINGLE_CHOICE")}>
                       <SelectTrigger className="h-10 w-44 text-sm">
                         <SelectValue />

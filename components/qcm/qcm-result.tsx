@@ -11,6 +11,7 @@ import { CheckCircle2, XCircle, MinusCircle, Trophy, RotateCcw } from "lucide-re
 type Option = { id: string; text: string; isCorrect: boolean }
 type AnswerResult = {
   questionText: string
+  points: number
   options: Option[]
   selectedOptionIds: string[]
 }
@@ -36,7 +37,9 @@ export function QcmResult({ qcmId, qcmTitle, score, total, percentage, answers }
           <div className={`mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full ${passed ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}>
             <Trophy className="h-8 w-8" />
           </div>
-          <h2 className="text-3xl font-bold">{score}/{total}</h2>
+          <h2 className="text-3xl font-bold">
+            {score}/{total} pts
+          </h2>
           <p className="mt-1 text-lg font-medium text-muted-foreground">{pct}%</p>
           <p className={`mt-2 text-base font-semibold ${passed ? "text-green-600" : "text-red-500"}`}>
             {pct >= 80 ? "Excellent" : pct >= 60 ? "Good job" : pct >= 50 ? "Passed" : "Keep studying"}
@@ -66,9 +69,14 @@ export function QcmResult({ qcmId, qcmTitle, score, total, percentage, answers }
                     ) : (
                       <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
                     )}
-                    <CardTitle className="text-xl font-semibold leading-snug">
-                      Q{idx + 1}. {a.questionText}
-                    </CardTitle>
+                    <div className="space-y-2">
+                      <CardTitle className="text-xl font-semibold leading-snug">
+                        Q{idx + 1}. {a.questionText}
+                      </CardTitle>
+                      <Badge variant="secondary">
+                        {a.points} {a.points === 1 ? "point" : "points"}
+                      </Badge>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>

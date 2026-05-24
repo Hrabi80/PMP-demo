@@ -15,13 +15,15 @@ export async function submitAttempt(
 ) {
   const session = await getSession()
 
-  // Calculate score
+  // Calculate point-based score.
   const questions = await prisma.qcmQuestion.findMany({
     where: { qcmId },
     include: { options: true },
   })
 
   let score = 0
+  const totalPoints = questions.reduce((sum, question) => sum + question.points, 0)
+
   for (const question of questions) {
     const answer = answers.find((a) => a.questionId === question.id)
     if (!answer) continue
@@ -37,11 +39,11 @@ export async function submitAttempt(
       correctIds.length === selectedIds.length &&
       correctIds.every((id) => selectedIds.includes(id))
 
-    if (isCorrect) score++
+    if (isCorrect) score += question.points
   }
 
   const totalQuestions = questions.length
-  const percentage = totalQuestions > 0 ? (score / totalQuestions) * 100 : 0
+  const percentage = totalPoints > 0 ? (score / totalPoints) * 100 : 0
 
   // Only persist for logged-in students
   if (session && session.role === "STUDENT") {
@@ -51,6 +53,7 @@ export async function submitAttempt(
         studentId: session.id,
         score,
         totalQuestions,
+        totalPoints,
         percentage,
         answers: {
           create: answers.map((a) => ({
@@ -60,15 +63,15 @@ export async function submitAttempt(
         },
       },
     })
-    return { attemptId: attempt.id, score, totalQuestions, percentage }
+    return { attemptId: attempt.id, score, totalQuestions, totalPoints, percentage }
   }
 
   // Guest: return results without persisting
   if (guestName) {
-    return { score, totalQuestions, percentage }
+    return { score, totalQuestions, totalPoints, percentage }
   }
 
-  return { score, totalQuestions, percentage }
+  return { score, totalQuestions, totalPoints, percentage }
 }
 
 export async function getAttemptResult(attemptId: string) {

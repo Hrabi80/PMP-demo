@@ -19,6 +19,7 @@ type QuestionInput = {
   id?: string
   questionText: string
   type: QuestionType
+  points: number
   order: number
   options: OptionInput[]
 }
@@ -43,6 +44,20 @@ async function validateQcmOptions(data: QcmInput) {
   if (invalidQuestionIndex === -1) return null
 
   return `Question ${invalidQuestionIndex + 1} must have exactly ${FIXED_OPTION_COUNT} options.`
+}
+
+function validateQcmPoints(data: QcmInput) {
+  const invalidQuestionIndex = data.questions.findIndex(
+    (q) => !Number.isFinite(Number(q.points)) || Number(q.points) <= 0
+  )
+
+  if (invalidQuestionIndex === -1) return null
+
+  return `Question ${invalidQuestionIndex + 1} must have a positive point value.`
+}
+
+function normalizePoints(points: number) {
+  return Math.max(1, Math.round(Number(points)))
 }
 
 export async function getQcms(specialityId?: string, classLevelId?: string) {
@@ -100,6 +115,9 @@ export async function createQcm(data: QcmInput) {
   const optionError = await validateQcmOptions(data)
   if (optionError) return { error: optionError }
 
+  const pointsError = validateQcmPoints(data)
+  if (pointsError) return { error: pointsError }
+
   await prisma.qcm.create({
     data: {
       title: data.title,
@@ -112,6 +130,7 @@ export async function createQcm(data: QcmInput) {
         create: data.questions.map((q) => ({
           questionText: q.questionText,
           type: q.type,
+          points: normalizePoints(q.points),
           order: q.order,
           options: {
             create: q.options.map((o) => ({
@@ -139,6 +158,9 @@ export async function updateQcm(id: string, data: QcmInput) {
   const optionError = await validateQcmOptions(data)
   if (optionError) return { error: optionError }
 
+  const pointsError = validateQcmPoints(data)
+  if (pointsError) return { error: pointsError }
+
   // Delete existing questions (cascade deletes options)
   await prisma.qcmQuestion.deleteMany({ where: { qcmId: id } })
 
@@ -154,6 +176,7 @@ export async function updateQcm(id: string, data: QcmInput) {
         create: data.questions.map((q) => ({
           questionText: q.questionText,
           type: q.type,
+          points: normalizePoints(q.points),
           order: q.order,
           options: {
             create: q.options.map((o) => ({
