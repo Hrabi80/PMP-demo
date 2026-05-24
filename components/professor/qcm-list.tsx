@@ -7,6 +7,7 @@ import { routes } from "@/lib/routes"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { Pencil, Trash2, Plus, BookOpen } from "lucide-react"
 
 type Qcm = {
@@ -21,9 +22,10 @@ type Qcm = {
 
 export function ProfessorQcmList({ initialQcms }: { initialQcms: Qcm[] }) {
   const [qcms, setQcms] = useState(initialQcms)
+  const [qcmToDelete, setQcmToDelete] = useState<string | null>(null)
+  const pendingQcm = qcms.find((qcm) => qcm.id === qcmToDelete)
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this QCM and all its questions?")) return
     await deleteQcm(id)
     setQcms((prev) => prev.filter((q) => q.id !== id))
   }
@@ -75,7 +77,7 @@ export function ProfessorQcmList({ initialQcms }: { initialQcms: Qcm[] }) {
                   <Button
                     variant="outline" size="sm"
                     className="gap-1 text-destructive hover:text-destructive"
-                    onClick={() => handleDelete(qcm.id)}
+                    onClick={() => setQcmToDelete(qcm.id)}
                   >
                     <Trash2 className="h-3.5 w-3.5" /> Delete
                   </Button>
@@ -85,6 +87,19 @@ export function ProfessorQcmList({ initialQcms }: { initialQcms: Qcm[] }) {
           ))}
         </div>
       )}
+      <ConfirmDialog
+        open={qcmToDelete !== null}
+        onOpenChange={(open) => !open && setQcmToDelete(null)}
+        title="Delete this QCM?"
+        description={`This will permanently delete ${
+          pendingQcm ? `"${pendingQcm.title}"` : "this QCM"
+        } and all of its questions. This action cannot be undone.`}
+        confirmLabel="Delete QCM"
+        onConfirm={async () => {
+          if (!qcmToDelete) return
+          await handleDelete(qcmToDelete)
+        }}
+      />
     </div>
   )
 }

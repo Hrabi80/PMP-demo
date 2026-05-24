@@ -26,6 +26,7 @@ export function QcmPlayer({ qcm }: { qcm: Qcm }) {
   const router = useRouter()
   const [answers, setAnswers] = useState<Record<string, string[]>>({})
   const [currentIndex, setCurrentIndex] = useState(0)
+  const [transitionDirection, setTransitionDirection] = useState<"forward" | "backward">("forward")
   const [submitting, setSubmitting] = useState(false)
 
   function selectOption(questionId: string, optionId: string, type: QuestionType) {
@@ -64,11 +65,17 @@ export function QcmPlayer({ qcm }: { qcm: Qcm }) {
     }
   }
 
+  function goToQuestion(nextIndex: number) {
+    setTransitionDirection(nextIndex >= currentIndex ? "forward" : "backward")
+    setCurrentIndex(nextIndex)
+  }
+
   const currentQuestion = qcm.questions[currentIndex]
   const answeredCount = qcm.questions.filter((q) => (answers[q.id]?.length ?? 0) > 0).length
   const totalPoints = qcm.questions.reduce((sum, q) => sum + q.points, 0)
   const currentAnswerCount = currentQuestion ? (answers[currentQuestion.id]?.length ?? 0) : 0
   const isLastQuestion = currentIndex === qcm.questions.length - 1
+  const completionPercent = Math.round((answeredCount / qcm.questions.length) * 100)
 
   if (!currentQuestion) {
     return (
@@ -101,8 +108,37 @@ export function QcmPlayer({ qcm }: { qcm: Qcm }) {
 
       <Card>
         <CardHeader className="pb-3">
-          <div className="mb-2 flex items-center justify-between gap-4">
-            <div className="flex items-center gap-2">
+          <div className="space-y-3">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <p className="text-sm font-semibold uppercase tracking-normal text-muted-foreground">
+                  Progress
+                </p>
+                <p className="text-base font-medium">
+                  {answeredCount} of {qcm.questions.length} answered
+                </p>
+              </div>
+              <Badge variant="outline">
+                Question {currentIndex + 1} of {qcm.questions.length}
+              </Badge>
+            </div>
+            <div
+              className="h-3 w-full overflow-hidden rounded-full bg-muted"
+              aria-label={`${completionPercent}% answered`}
+              role="progressbar"
+              aria-valuenow={completionPercent}
+              aria-valuemin={0}
+              aria-valuemax={100}
+            >
+              <div
+                className="h-full rounded-full bg-primary transition-[width] duration-500 ease-out"
+                style={{ width: `${completionPercent}%` }}
+              />
+            </div>
+            <div
+              className="grid w-full gap-1.5"
+              style={{ gridTemplateColumns: "repeat(auto-fit, minmax(0.75rem, 1fr))" }}
+            >
               {qcm.questions.map((q, idx) => {
                 const answered = (answers[q.id]?.length ?? 0) > 0
                 const active = idx === currentIndex
@@ -110,21 +146,34 @@ export function QcmPlayer({ qcm }: { qcm: Qcm }) {
                   <button
                     key={q.id}
                     type="button"
-                    onClick={() => setCurrentIndex(idx)}
+                    onClick={() => goToQuestion(idx)}
                     aria-label={`Go to question ${idx + 1}`}
+                    aria-current={active ? "step" : undefined}
                     className={cn(
-                      "h-2.5 rounded-full transition-all",
-                      active ? "w-8 bg-primary" : answered ? "w-2.5 bg-primary/50" : "w-2.5 bg-muted-foreground/30"
+                      "h-3 min-w-0 rounded-full transition-colors duration-200",
+                      active
+                        ? "bg-primary ring-2 ring-primary/30 ring-offset-2 ring-offset-card"
+                        : answered
+                          ? "bg-primary/55"
+                          : "bg-muted-foreground/25"
                     )}
                   />
                 )
               })}
             </div>
-            <Badge variant="outline">
-              Question {currentIndex + 1} of {qcm.questions.length}
-            </Badge>
           </div>
+        </CardHeader>
 
+        <div
+          key={currentQuestion.id}
+          className={cn(
+            "motion-safe:animate-in motion-safe:fade-in-0 motion-safe:duration-300",
+            transitionDirection === "forward"
+              ? "motion-safe:slide-in-from-right-4"
+              : "motion-safe:slide-in-from-left-4"
+          )}
+        >
+          <CardHeader className="pt-0 pb-3">
           <div className="flex items-start gap-3">
             <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary text-base font-bold text-primary-foreground shadow-sm">
               {currentIndex + 1}
@@ -141,38 +190,39 @@ export function QcmPlayer({ qcm }: { qcm: Qcm }) {
               </div>
             </div>
           </div>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-2">
-            {currentQuestion.options.map((o) => {
-              const selected = (answers[currentQuestion.id] ?? []).includes(o.id)
-              return (
-                <button
-                  key={o.id}
-                  onClick={() => selectOption(currentQuestion.id, o.id, currentQuestion.type)}
-                  className={`w-full rounded-lg border px-5 py-4 text-left text-lg font-medium leading-relaxed shadow-sm transition-colors ${
-                    selected
-                      ? "border-primary bg-primary/10 text-primary shadow-primary/10"
-                      : "bg-background hover:border-primary/40 hover:bg-muted"
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <span
-                      className={cn(
-                        "flex h-6 w-6 shrink-0 items-center justify-center border-2",
-                        currentQuestion.type === "SINGLE_CHOICE" ? "rounded-full" : "rounded-sm",
-                        selected ? "border-primary bg-primary" : "border-muted-foreground/60 bg-card"
-                      )}
-                    >
-                      {selected && <span className="block h-3 w-3 rounded-full bg-white" />}
-                    </span>
-                    {o.text}
-                  </div>
-                </button>
-              )
-            })}
-          </div>
-        </CardContent>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-2">
+              {currentQuestion.options.map((o) => {
+                const selected = (answers[currentQuestion.id] ?? []).includes(o.id)
+                return (
+                  <button
+                    key={o.id}
+                    onClick={() => selectOption(currentQuestion.id, o.id, currentQuestion.type)}
+                    className={`w-full rounded-lg border px-5 py-4 text-left text-lg font-medium leading-relaxed shadow-sm transition-colors ${
+                      selected
+                        ? "border-primary bg-primary/10 text-primary shadow-primary/10"
+                        : "bg-background hover:border-primary/40 hover:bg-muted"
+                    }`}
+                  >
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={cn(
+                          "flex h-6 w-6 shrink-0 items-center justify-center border-2",
+                          currentQuestion.type === "SINGLE_CHOICE" ? "rounded-full" : "rounded-sm",
+                          selected ? "border-primary bg-primary" : "border-muted-foreground/60 bg-card"
+                        )}
+                      >
+                        {selected && <span className="block h-3 w-3 rounded-full bg-white" />}
+                      </span>
+                      {o.text}
+                    </div>
+                  </button>
+                )
+              })}
+            </div>
+          </CardContent>
+        </div>
       </Card>
 
       <div className="flex flex-col gap-3 rounded-lg border bg-card px-6 py-5 shadow-lg shadow-primary/5 sm:flex-row sm:items-center sm:justify-between">
@@ -189,7 +239,7 @@ export function QcmPlayer({ qcm }: { qcm: Qcm }) {
           <Button
             type="button"
             variant="outline"
-            onClick={() => setCurrentIndex((idx) => Math.max(0, idx - 1))}
+            onClick={() => goToQuestion(Math.max(0, currentIndex - 1))}
             disabled={currentIndex === 0}
             className="gap-1"
           >
@@ -205,7 +255,7 @@ export function QcmPlayer({ qcm }: { qcm: Qcm }) {
           ) : (
             <Button
               type="button"
-              onClick={() => setCurrentIndex((idx) => Math.min(qcm.questions.length - 1, idx + 1))}
+              onClick={() => goToQuestion(Math.min(qcm.questions.length - 1, currentIndex + 1))}
               className="gap-1"
             >
               Next

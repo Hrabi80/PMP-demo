@@ -21,7 +21,15 @@ export function SignupForm({ specialities }: { specialities: Speciality[] }) {
   const [specialityOther, setSpecialityOther] = useState("")
   const [error, setError] = useState("")
   const [loading, setLoading] = useState(false)
-
+  const roleItems = [
+    { value: "STUDENT", label: "Student" },
+    { value: "PROFESSOR", label: "Professor" },
+    { value: "ADMIN", label: "Admin" },
+  ]
+  const specialityItems = [
+    ...specialities.map((s) => ({ value: s.id, label: s.name })),
+    { value: "other", label: "Other" },
+  ]
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -74,7 +82,7 @@ export function SignupForm({ specialities }: { specialities: Speciality[] }) {
 
           <div className="space-y-1">
             <Label>Role</Label>
-            <Select value={role} onValueChange={(v) => setRole((v as Role) || "STUDENT")}>
+            <Select items={roleItems} value={role} onValueChange={(v) => setRole((v as Role) || "STUDENT")}>
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>
@@ -90,7 +98,7 @@ export function SignupForm({ specialities }: { specialities: Speciality[] }) {
             <>
               <div className="space-y-1">
                 <Label>Speciality</Label>
-                <Select value={specialityId} onValueChange={(v) => setSpecialityId(v || "")}>
+                <Select items={specialityItems} value={specialityId} onValueChange={(v) => setSpecialityId(v || "")}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select your speciality" />
                   </SelectTrigger>

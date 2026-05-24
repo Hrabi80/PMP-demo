@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { Pencil, Trash2, Plus, Check, X } from "lucide-react"
 
 type Speciality = { id: string; name: string }
@@ -26,6 +27,9 @@ export function ClassLevelManager({
   const [editName, setEditName] = useState("")
   const [editSpecialityId, setEditSpecialityId] = useState("")
   const [error, setError] = useState("")
+  const [classLevelToDelete, setClassLevelToDelete] = useState<string | null>(null)
+  const specialityItems = specialities.map((s) => ({ value: s.id, label: s.name }))
+  const pendingClassLevel = classLevels.find((classLevel) => classLevel.id === classLevelToDelete)
 
   async function handleCreate() {
     setError("")
@@ -58,7 +62,6 @@ export function ClassLevelManager({
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this class level?")) return
     await deleteClassLevel(id)
     setClassLevels((prev) => prev.filter((cl) => cl.id !== id))
   }
@@ -78,7 +81,7 @@ export function ClassLevelManager({
             onChange={(e) => setNewName(e.target.value)}
             className="flex-1"
           />
-          <Select value={newSpecialityId} onValueChange={(v) => setNewSpecialityId(v || "")}>
+          <Select items={specialityItems} value={newSpecialityId} onValueChange={(v) => setNewSpecialityId(v || "")}>
             <SelectTrigger className="w-48">
               <SelectValue placeholder="Speciality" />
             </SelectTrigger>
@@ -104,7 +107,7 @@ export function ClassLevelManager({
                     onChange={(e) => setEditName(e.target.value)}
                     autoFocus
                   />
-                  <Select value={editSpecialityId} onValueChange={(v) => setEditSpecialityId(v || "")}>
+                  <Select items={specialityItems} value={editSpecialityId} onValueChange={(v) => setEditSpecialityId(v || "")}>
                     <SelectTrigger className="h-7 w-40">
                       <SelectValue />
                     </SelectTrigger>
@@ -133,7 +136,7 @@ export function ClassLevelManager({
                   </Button>
                   <Button
                     size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive"
-                    onClick={() => handleDelete(cl.id)}
+                    onClick={() => setClassLevelToDelete(cl.id)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -145,6 +148,19 @@ export function ClassLevelManager({
             <p className="py-4 text-center text-sm text-muted-foreground">No class levels yet.</p>
           )}
         </div>
+        <ConfirmDialog
+          open={classLevelToDelete !== null}
+          onOpenChange={(open) => !open && setClassLevelToDelete(null)}
+          title="Delete this class level?"
+          description={`This will permanently delete ${
+            pendingClassLevel ? `"${pendingClassLevel.name}"` : "this class level"
+          }. Existing QCM links should be reviewed before continuing.`}
+          confirmLabel="Delete level"
+          onConfirm={async () => {
+            if (!classLevelToDelete) return
+            await handleDelete(classLevelToDelete)
+          }}
+        />
       </CardContent>
     </Card>
   )

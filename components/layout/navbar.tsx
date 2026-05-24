@@ -7,7 +7,7 @@ import { routes } from "@/lib/routes"
 import { Role } from "@prisma/client"
 import { Button } from "@/components/ui/button"
 import { Badge } from "@/components/ui/badge"
-import { Brain, LogOut, LayoutDashboard, BookOpen, Settings } from "lucide-react"
+import { Brain, LogOut, LayoutDashboard, BookOpen, Settings, UserRound } from "lucide-react"
 
 type NavbarProps = {
   user: { fullName: string; role: Role } | null
@@ -57,9 +57,12 @@ export function Navbar({ user }: NavbarProps) {
 
           {user ? (
             <div className="flex items-center gap-2">
-              <span className="hidden text-sm text-muted-foreground sm:inline">
-                {user.fullName}
-              </span>
+              <Link href={routes.profile}>
+                <Button variant="ghost" size="sm" className="gap-1">
+                  <UserRound className="h-4 w-4" />
+                  <span className="hidden sm:inline">{user.fullName}</span>
+                </Button>
+              </Link>
               <Badge variant="secondary" className="hidden sm:inline-flex capitalize">
                 {user.role.toLowerCase()}
               </Badge>
