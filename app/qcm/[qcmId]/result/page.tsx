@@ -12,6 +12,7 @@ type SearchParams = Promise<{
   attemptId?: string
   score?: string
   total?: string
+  questions?: string
   pct?: string
   answers?: string
   qcmId?: string
@@ -32,19 +33,23 @@ export default async function QcmResultPage({
     const attempt = await getAttemptResult(sp.attemptId)
     if (!attempt) notFound()
 
-    const answers = attempt.answers.map((a: any) => ({
-      questionText: a.question.questionText,
-      options: a.question.options,
-      selectedOptionIds: a.selectedOptionIds as string[],
-    }))
+    const answers = attempt.answers
+      .sort((a, b) => a.question.order - b.question.order)
+      .map((a) => ({
+        questionText: a.question.questionText,
+        points: a.question.points,
+        options: a.question.options,
+        selectedOptionIds: a.selectedOptionIds as string[],
+      }))
+    const totalPoints = attempt.totalPoints || answers.reduce((sum, answer) => sum + answer.points, 0)
 
     return (
-      <div className="mx-auto max-w-2xl">
+      <div className="mx-auto max-w-4xl">
         <QcmResult
           qcmId={qcmId}
           qcmTitle={attempt.qcm.title}
           score={attempt.score}
-          total={attempt.totalQuestions}
+          total={totalPoints}
           percentage={attempt.percentage}
           answers={answers}
         />
@@ -66,13 +71,14 @@ export default async function QcmResultPage({
       const found = guestAnswers.find((a) => a.questionId === q.id)
       return {
         questionText: q.questionText,
+        points: q.points,
         options: q.options,
         selectedOptionIds: found?.selectedOptionIds ?? [],
       }
     })
 
     return (
-      <div className="mx-auto max-w-2xl">
+      <div className="mx-auto max-w-4xl">
         <QcmResult
           qcmId={qcmId}
           qcmTitle={qcm.title}

@@ -1,6 +1,8 @@
 import type { Metadata } from "next"
 import Link from "next/link"
 import { routes } from "@/lib/routes"
+import { getPlatformSettings } from "@/features/settings/actions"
+import { QcmOptionSettings } from "@/components/admin/qcm-option-settings"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 import { Settings, GraduationCap } from "lucide-react"
@@ -9,11 +11,13 @@ export const metadata: Metadata = {
   title: "Admin Dashboard – MedQCM",
 }
 
-export default function AdminPage() {
+export default async function AdminPage() {
+  const settings = await getPlatformSettings()
+
   return (
     <div className="space-y-6">
       <h1 className="text-2xl font-bold">Admin Dashboard</h1>
-      <div className="grid gap-4 sm:grid-cols-2">
+      <div className="grid gap-4 lg:grid-cols-3">
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -40,6 +44,7 @@ export default function AdminPage() {
             </Link>
           </CardContent>
         </Card>
+        <QcmOptionSettings enforceFiveQcmOptions={settings.enforceFiveQcmOptions} />
       </div>
     </div>
   )

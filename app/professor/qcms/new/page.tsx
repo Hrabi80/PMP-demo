@@ -3,6 +3,7 @@ import Link from "next/link"
 import { routes } from "@/lib/routes"
 import { getSpecialities } from "@/features/specialities/actions"
 import { getClassLevels } from "@/features/class-levels/actions"
+import { getEnforceFiveQcmOptions } from "@/features/settings/actions"
 import { QcmForm } from "@/components/professor/qcm-form"
 import { Button } from "@/components/ui/button"
 import { ChevronLeft } from "lucide-react"
@@ -12,9 +13,14 @@ export const metadata: Metadata = {
 }
 
 export default async function NewQcmPage() {
-  const [specialities, classLevels] = await Promise.all([getSpecialities(), getClassLevels()])
+  const [specialities, classLevels, enforceFiveOptions] = await Promise.all([
+    getSpecialities(),
+    getClassLevels(),
+    getEnforceFiveQcmOptions(),
+  ])
+
   return (
-    <div className="mx-auto max-w-2xl space-y-6">
+    <div className="mx-auto max-w-4xl space-y-6">
       <div className="flex items-center gap-3">
         <Link href={routes.professor.dashboard}>
           <Button variant="ghost" size="sm" className="gap-1">
@@ -23,7 +29,7 @@ export default async function NewQcmPage() {
         </Link>
         <h1 className="text-2xl font-bold">Create QCM</h1>
       </div>
-      <QcmForm specialities={specialities} classLevels={classLevels} />
+      <QcmForm specialities={specialities} classLevels={classLevels} enforceFiveOptions={enforceFiveOptions} />
     </div>
   )
 }

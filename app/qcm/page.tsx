@@ -19,8 +19,8 @@ export default async function QcmPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">QCM Library</h1>
-        <p className="text-sm text-muted-foreground">Browse and practice quizzes from all specialities.</p>
+        <h1 className="text-3xl font-bold">QCM Library</h1>
+        <p className="text-lg text-muted-foreground">Browse and practice quizzes from all specialities.</p>
       </div>
       <QcmBrowser specialities={specialities} classLevels={classLevels} qcms={qcms} />
     </div>

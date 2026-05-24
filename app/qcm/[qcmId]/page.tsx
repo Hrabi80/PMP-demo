@@ -1,7 +1,6 @@
 import type { Metadata } from "next"
 import { notFound } from "next/navigation"
 import { getQcmById } from "@/features/qcms/actions"
-import { getSession } from "@/lib/auth"
 import { QcmPlayer } from "@/components/qcm/qcm-player"
 
 export async function generateMetadata({ params }: { params: Promise<{ qcmId: string }> }): Promise<Metadata> {
@@ -12,14 +11,12 @@ export async function generateMetadata({ params }: { params: Promise<{ qcmId: st
 
 export default async function QcmTakePage({ params }: { params: Promise<{ qcmId: string }> }) {
   const { qcmId } = await params
-  const [qcm, session] = await Promise.all([getQcmById(qcmId), getSession()])
+  const qcm = await getQcmById(qcmId)
 
   if (!qcm) notFound()
 
-  const isStudent = session?.role === "STUDENT"
-
   return (
-    <div className="mx-auto max-w-2xl">
+    <div className="mx-auto max-w-4xl">
       <QcmPlayer qcm={qcm} />
     </div>
   )

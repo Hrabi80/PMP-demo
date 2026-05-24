@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState } from "react"
 
 import { createQcm, updateQcm } from "@/features/qcms/actions"
 import { Button } from "@/components/ui/button"
@@ -16,7 +16,7 @@ import { Plus, Trash2, ChevronLeft, ChevronRight, Save } from "lucide-react"
 import { QuestionType } from "@prisma/client"
 
 type Option = { text: string; isCorrect: boolean; order: number }
-type Question = { questionText: string; type: QuestionType; order: number; options: Option[] }
+type Question = { questionText: string; type: QuestionType; points: number; order: number; options: Option[] }
 
 type Speciality = { id: string; name: string }
 type ClassLevel = { id: string; name: string; specialityId: string }
@@ -32,6 +32,7 @@ type ExistingQcm = {
     id: string
     questionText: string
     type: QuestionType
+    points: number
     order: number
     options: Array<{ id: string; text: string; isCorrect: boolean; order: number }>
   }>
@@ -41,12 +42,27 @@ function emptyOption(order: number): Option {
   return { text: "", isCorrect: false, order }
 }
 
+const FIXED_OPTION_COUNT = 5
+
+function fixedOptions(options: Option[] = []) {
+  const normalized = options
+    .slice(0, FIXED_OPTION_COUNT)
+    .map((option, index) => ({ ...option, order: index + 1 }))
+
+  while (normalized.length < FIXED_OPTION_COUNT) {
+    normalized.push(emptyOption(normalized.length + 1))
+  }
+
+  return normalized
+}
+
 function emptyQuestion(order: number): Question {
   return {
     questionText: "",
     type: "SINGLE_CHOICE",
+    points: 1,
     order,
-    options: [emptyOption(1), emptyOption(2), emptyOption(3), emptyOption(4)],
+    options: fixedOptions(),
   }
 }
 
@@ -54,10 +70,12 @@ export function QcmForm({
   specialities,
   classLevels,
   existingQcm,
+  enforceFiveOptions = true,
 }: {
   specialities: Speciality[]
   classLevels: ClassLevel[]
   existingQcm?: ExistingQcm
+  enforceFiveOptions?: boolean
 }) {
   const [step, setStep] = useState(1)
   const [loading, setLoading] = useState(false)
@@ -76,14 +94,16 @@ export function QcmForm({
       ? existingQcm.questions.map((q) => ({
           questionText: q.questionText,
           type: q.type,
+          points: q.points,
           order: q.order,
-          options: q.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect, order: o.order })),
+          options: enforceFiveOptions
+            ? fixedOptions(q.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect, order: o.order })))
+            : q.options.map((o) => ({ text: o.text, isCorrect: o.isCorrect, order: o.order })),
         }))
       : [emptyQuestion(1)]
   )
 
   const filteredClassLevels = classLevels.filter((cl) => cl.specialityId === specialityId)
-
 
   function addQuestion() {
     setQuestions((prev) => [...prev, emptyQuestion(prev.length + 1)])
@@ -93,11 +113,18 @@ export function QcmForm({
     setQuestions((prev) => prev.filter((_, i) => i !== idx).map((q, i) => ({ ...q, order: i + 1 })))
   }
 
-  function updateQuestion(idx: number, field: keyof Question, value: string | QuestionType) {
+  function updateQuestion(idx: number, field: keyof Question, value: string | number | QuestionType) {
     setQuestions((prev) => prev.map((q, i) => (i === idx ? { ...q, [field]: value } : q)))
   }
 
+  function updateQuestionPoints(idx: number, value: string) {
+    const parsed = Number.parseInt(value, 10)
+    updateQuestion(idx, "points", Number.isFinite(parsed) ? Math.max(1, parsed) : 1)
+  }
+
   function addOption(qIdx: number) {
+    if (enforceFiveOptions) return
+
     setQuestions((prev) =>
       prev.map((q, i) =>
         i === qIdx
@@ -108,6 +135,8 @@ export function QcmForm({
   }
 
   function removeOption(qIdx: number, oIdx: number) {
+    if (enforceFiveOptions) return
+
     setQuestions((prev) =>
       prev.map((q, i) =>
         i === qIdx
@@ -153,13 +182,35 @@ export function QcmForm({
       year: parseInt(year),
       specialityId,
       classLevelId,
-      questions,
+      questions: enforceFiveOptions
+        ? questions.map((q) => ({ ...q, options: fixedOptions(q.options) }))
+        : questions,
     }
 
-    if (existingQcm) {
-      await updateQcm(existingQcm.id, data)
-    } else {
-      await createQcm(data)
+    if (enforceFiveOptions) {
+      const invalidQuestionIndex = data.questions.findIndex((q) => q.options.length !== FIXED_OPTION_COUNT)
+      if (invalidQuestionIndex !== -1) {
+        setError(`Question ${invalidQuestionIndex + 1} must have exactly ${FIXED_OPTION_COUNT} options.`)
+        setLoading(false)
+        return
+      }
+    }
+
+    const invalidPointsIndex = data.questions.findIndex((q) => !Number.isFinite(q.points) || q.points <= 0)
+    if (invalidPointsIndex !== -1) {
+      setError(`Question ${invalidPointsIndex + 1} must have a positive point value.`)
+      setLoading(false)
+      return
+    }
+
+    const result = existingQcm
+      ? await updateQcm(existingQcm.id, data)
+      : await createQcm(data)
+
+    if (result?.error) {
+      setError(result.error)
+      setLoading(false)
+      return
     }
 
     setLoading(false)
@@ -176,8 +227,8 @@ export function QcmForm({
 
       {step === 1 && (
         <Card>
-          <CardHeader><CardTitle>QCM Details</CardTitle></CardHeader>
-          <CardContent className="space-y-4">
+          <CardHeader><CardTitle className="text-xl">QCM Details</CardTitle></CardHeader>
+          <CardContent className="space-y-5">
             <div className="space-y-1">
               <Label htmlFor="title">Title</Label>
               <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} placeholder="e.g. Cardiac Anatomy Basics" />
@@ -190,7 +241,7 @@ export function QcmForm({
               <div className="space-y-1">
                 <Label>Speciality</Label>
                 <Select value={specialityId} onValueChange={(v) => { setSpecialityId(v || ""); setClassLevelId("") }}>
-                  <SelectTrigger><SelectValue placeholder="Select…" /></SelectTrigger>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Select…" /></SelectTrigger>
                   <SelectContent>
                     {specialities.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
                   </SelectContent>
@@ -199,7 +250,7 @@ export function QcmForm({
               <div className="space-y-1">
                 <Label>Class Level</Label>
                 <Select value={classLevelId} onValueChange={(v) => setClassLevelId(v || "")} disabled={!specialityId}>
-                  <SelectTrigger><SelectValue placeholder="Select speciality first" /></SelectTrigger>
+                  <SelectTrigger className="w-full"><SelectValue placeholder="Select speciality first" /></SelectTrigger>
                   <SelectContent>
                     {filteredClassLevels.map((cl) => <SelectItem key={cl.id} value={cl.id}>{cl.name}</SelectItem>)}
                   </SelectContent>
@@ -230,11 +281,25 @@ export function QcmForm({
           {questions.map((q, qIdx) => (
             <Card key={qIdx}>
               <CardHeader className="pb-3">
-                <div className="flex items-center justify-between">
-                  <CardTitle className="text-base">Question {qIdx + 1}</CardTitle>
-                  <div className="flex items-center gap-2">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <CardTitle className="text-xl">Question {qIdx + 1}</CardTitle>
+                  <div className="flex flex-wrap items-center gap-2">
+                    <div className="flex items-center gap-2 rounded-lg border bg-background px-3 py-2">
+                      <Label htmlFor={`question-${qIdx}-points`} className="text-sm text-muted-foreground">
+                        Points
+                      </Label>
+                      <Input
+                        id={`question-${qIdx}-points`}
+                        type="number"
+                        min={1}
+                        max={100}
+                        value={q.points}
+                        onChange={(e) => updateQuestionPoints(qIdx, e.target.value)}
+                        className="h-8 w-20 px-2 text-center text-base"
+                      />
+                    </div>
                     <Select value={q.type} onValueChange={(v) => updateQuestion(qIdx, "type", (v as QuestionType) || "SINGLE_CHOICE")}>
-                      <SelectTrigger className="h-7 w-40 text-xs">
+                      <SelectTrigger className="h-10 w-44 text-sm">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
@@ -250,44 +315,51 @@ export function QcmForm({
                   </div>
                 </div>
               </CardHeader>
-              <CardContent className="space-y-3">
+              <CardContent className="space-y-4">
                 <Textarea
                   value={q.questionText}
                   onChange={(e) => updateQuestion(qIdx, "questionText", e.target.value)}
                   placeholder="Enter question text…"
-                  rows={2}
+                  rows={3}
+                  className="text-lg leading-relaxed"
                 />
                 <Separator />
                 <div className="space-y-2">
                   <div className="flex items-center justify-between">
-                    <Label className="text-xs text-muted-foreground">Options</Label>
+                    <Label className="text-sm text-muted-foreground">Options</Label>
                     <Badge variant="outline" className="text-xs">
-                      {q.type === "SINGLE_CHOICE" ? "Toggle correct answer" : "Toggle all correct answers"}
+                      {enforceFiveOptions
+                        ? "Exactly 5 options"
+                        : q.type === "SINGLE_CHOICE"
+                          ? "Toggle correct answer"
+                          : "Toggle all correct answers"}
                     </Badge>
                   </div>
                   {q.options.map((o, oIdx) => (
-                    <div key={oIdx} className="flex items-center gap-2">
+                    <div key={oIdx} className="flex items-center gap-3 rounded-lg border bg-background p-2">
                       <Switch
                         checked={o.isCorrect}
                         onCheckedChange={() => toggleCorrect(qIdx, oIdx)}
-                        className="data-[state=checked]:bg-green-500"
+                        className="data-checked:bg-green-500"
                       />
                       <Input
                         value={o.text}
                         onChange={(e) => updateOption(qIdx, oIdx, "text", e.target.value)}
                         placeholder={`Option ${oIdx + 1}`}
-                        className="flex-1"
+                        className="h-11 flex-1 text-base"
                       />
-                      {q.options.length > 2 && (
+                      {!enforceFiveOptions && q.options.length > 2 && (
                         <Button size="icon" variant="ghost" className="h-8 w-8 text-muted-foreground" onClick={() => removeOption(qIdx, oIdx)}>
                           <Trash2 className="h-3.5 w-3.5" />
                         </Button>
                       )}
                     </div>
                   ))}
-                  <Button variant="outline" size="sm" className="gap-1" onClick={() => addOption(qIdx)}>
-                    <Plus className="h-3.5 w-3.5" /> Add option
-                  </Button>
+                  {!enforceFiveOptions && (
+                    <Button variant="outline" size="sm" className="gap-1" onClick={() => addOption(qIdx)}>
+                      <Plus className="h-3.5 w-3.5" /> Add option
+                    </Button>
+                  )}
                 </div>
               </CardContent>
             </Card>

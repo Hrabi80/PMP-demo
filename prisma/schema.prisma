@@ -79,6 +79,7 @@ model QcmQuestion {
   qcmId        String
   questionText String
   type         QuestionType
+  points       Int          @default(1)
   order        Int
   createdAt    DateTime     @default(now())
   updatedAt    DateTime     @updatedAt
@@ -107,6 +108,7 @@ model QcmAttempt {
   guestName      String?
   score          Int
   totalQuestions Int
+  totalPoints    Int      @default(0)
   percentage     Float
   createdAt      DateTime @default(now())
 
@@ -123,4 +125,11 @@ model QcmAttemptAnswer {
 
   attempt  QcmAttempt  @relation(fields: [attemptId], references: [id], onDelete: Cascade)
   question QcmQuestion @relation(fields: [questionId], references: [id])
+}
+
+model PlatformSettings {
+  id                    String   @id @default("global")
+  enforceFiveQcmOptions Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
 }

@@ -11,6 +11,7 @@ import { CheckCircle2, XCircle, MinusCircle, Trophy, RotateCcw } from "lucide-re
 type Option = { id: string; text: string; isCorrect: boolean }
 type AnswerResult = {
   questionText: string
+  points: number
   options: Option[]
   selectedOptionIds: string[]
 }
@@ -31,23 +32,25 @@ export function QcmResult({ qcmId, qcmTitle, score, total, percentage, answers }
   return (
     <div className="space-y-6">
       {/* Score card */}
-      <Card className={`border-2 ${passed ? "border-green-500/30 bg-green-50/30 dark:bg-green-950/20" : "border-red-500/30 bg-red-50/30 dark:bg-red-950/20"}`}>
+      <Card className={`border-2 ${passed ? "border-green-500/30 bg-green-50/80" : "border-red-500/30 bg-red-50/80"}`}>
         <CardContent className="py-8 text-center">
-          <div className={`mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full ${passed ? "bg-green-100 text-green-600 dark:bg-green-900" : "bg-red-100 text-red-600 dark:bg-red-900"}`}>
+          <div className={`mx-auto mb-3 flex h-16 w-16 items-center justify-center rounded-full ${passed ? "bg-green-100 text-green-600" : "bg-red-100 text-red-600"}`}>
             <Trophy className="h-8 w-8" />
           </div>
-          <h2 className="text-3xl font-bold">{score}/{total}</h2>
+          <h2 className="text-3xl font-bold">
+            {score}/{total} pts
+          </h2>
           <p className="mt-1 text-lg font-medium text-muted-foreground">{pct}%</p>
-          <p className={`mt-2 text-sm font-semibold ${passed ? "text-green-600" : "text-red-500"}`}>
-            {pct >= 80 ? "Excellent! 🎉" : pct >= 60 ? "Good job! 👍" : pct >= 50 ? "Passed ✓" : "Keep studying 📖"}
+          <p className={`mt-2 text-base font-semibold ${passed ? "text-green-600" : "text-red-500"}`}>
+            {pct >= 80 ? "Excellent" : pct >= 60 ? "Good job" : pct >= 50 ? "Passed" : "Keep studying"}
           </p>
-          <p className="mt-1 text-xs text-muted-foreground">{qcmTitle}</p>
+          <p className="mt-1 text-base text-muted-foreground">{qcmTitle}</p>
         </CardContent>
       </Card>
 
       {/* Correction */}
       <div>
-        <h3 className="mb-3 font-semibold">Correction</h3>
+        <h3 className="mb-3 text-2xl font-semibold">Correction</h3>
         <div className="space-y-4">
           {answers.map((a, idx) => {
             const correctIds = a.options.filter((o) => o.isCorrect).map((o) => o.id)
@@ -66,9 +69,14 @@ export function QcmResult({ qcmId, qcmTitle, score, total, percentage, answers }
                     ) : (
                       <XCircle className="mt-0.5 h-5 w-5 shrink-0 text-red-500" />
                     )}
-                    <CardTitle className="text-sm font-medium leading-snug">
-                      Q{idx + 1}. {a.questionText}
-                    </CardTitle>
+                    <div className="space-y-2">
+                      <CardTitle className="text-xl font-semibold leading-snug">
+                        Q{idx + 1}. {a.questionText}
+                      </CardTitle>
+                      <Badge variant="secondary">
+                        {a.points} {a.points === 1 ? "point" : "points"}
+                      </Badge>
+                    </div>
                   </div>
                 </CardHeader>
                 <CardContent>
@@ -77,20 +85,20 @@ export function QcmResult({ qcmId, qcmTitle, score, total, percentage, answers }
                       const isSelected = selectedIds.includes(o.id)
                       const isCorrect = o.isCorrect
 
-                      let className = "flex items-center gap-2 rounded-lg px-3 py-2 text-sm "
+                      let className = "flex items-center gap-3 rounded-lg px-4 py-3 text-lg font-medium leading-relaxed "
                       let Icon = MinusCircle
                       let iconClass = "text-muted-foreground"
 
                       if (isCorrect && isSelected) {
-                        className += "bg-green-100 dark:bg-green-950/40"
+                        className += "bg-green-100"
                         Icon = CheckCircle2
                         iconClass = "text-green-500"
                       } else if (!isCorrect && isSelected) {
-                        className += "bg-red-100 dark:bg-red-950/40"
+                        className += "bg-red-100"
                         Icon = XCircle
                         iconClass = "text-red-500"
                       } else if (isCorrect && !isSelected) {
-                        className += "bg-yellow-50 dark:bg-yellow-950/20"
+                        className += "bg-yellow-50"
                         Icon = CheckCircle2
                         iconClass = "text-yellow-500"
                       } else {
@@ -99,10 +107,10 @@ export function QcmResult({ qcmId, qcmTitle, score, total, percentage, answers }
 
                       return (
                         <div key={o.id} className={className}>
-                          <Icon className={`h-4 w-4 shrink-0 ${iconClass}`} />
+                          <Icon className={`h-5 w-5 shrink-0 ${iconClass}`} />
                           <span>{o.text}</span>
                           {isCorrect && !isSelected && (
-                            <Badge variant="outline" className="ml-auto text-xs text-yellow-600">Missed</Badge>
+                            <Badge variant="outline" className="ml-auto text-yellow-600">Missed</Badge>
                           )}
                         </div>
                       )
