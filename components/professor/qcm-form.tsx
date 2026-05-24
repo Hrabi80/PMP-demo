@@ -104,6 +104,12 @@ export function QcmForm({
   )
 
   const filteredClassLevels = classLevels.filter((cl) => cl.specialityId === specialityId)
+  const specialityItems = specialities.map((s) => ({ value: s.id, label: s.name }))
+  const classLevelItems = filteredClassLevels.map((cl) => ({ value: cl.id, label: cl.name }))
+  const questionTypeItems = [
+    { value: "SINGLE_CHOICE", label: "Single choice" },
+    { value: "MULTIPLE_CHOICE", label: "Multiple choice" },
+  ]
 
   function addQuestion() {
     setQuestions((prev) => [...prev, emptyQuestion(prev.length + 1)])
@@ -240,7 +246,7 @@ export function QcmForm({
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-1">
                 <Label>Speciality</Label>
-                <Select value={specialityId} onValueChange={(v) => { setSpecialityId(v || ""); setClassLevelId("") }}>
+                <Select items={specialityItems} value={specialityId} onValueChange={(v) => { setSpecialityId(v || ""); setClassLevelId("") }}>
                   <SelectTrigger className="w-full"><SelectValue placeholder="Select…" /></SelectTrigger>
                   <SelectContent>
                     {specialities.map((s) => <SelectItem key={s.id} value={s.id}>{s.name}</SelectItem>)}
@@ -249,7 +255,7 @@ export function QcmForm({
               </div>
               <div className="space-y-1">
                 <Label>Class Level</Label>
-                <Select value={classLevelId} onValueChange={(v) => setClassLevelId(v || "")} disabled={!specialityId}>
+                <Select items={classLevelItems} value={classLevelId} onValueChange={(v) => setClassLevelId(v || "")} disabled={!specialityId}>
                   <SelectTrigger className="w-full"><SelectValue placeholder="Select speciality first" /></SelectTrigger>
                   <SelectContent>
                     {filteredClassLevels.map((cl) => <SelectItem key={cl.id} value={cl.id}>{cl.name}</SelectItem>)}
@@ -298,7 +304,7 @@ export function QcmForm({
                         className="h-8 w-20 px-2 text-center text-base"
                       />
                     </div>
-                    <Select value={q.type} onValueChange={(v) => updateQuestion(qIdx, "type", (v as QuestionType) || "SINGLE_CHOICE")}>
+                    <Select items={questionTypeItems} value={q.type} onValueChange={(v) => updateQuestion(qIdx, "type", (v as QuestionType) || "SINGLE_CHOICE")}>
                       <SelectTrigger className="h-10 w-44 text-sm">
                         <SelectValue />
                       </SelectTrigger>

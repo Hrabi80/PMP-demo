@@ -2,6 +2,7 @@ export const routes = {
   home: "/",
   login: "/login",
   signup: "/signup",
+  profile: "/profile",
   accessDenied: "/access-denied",
 
   admin: {

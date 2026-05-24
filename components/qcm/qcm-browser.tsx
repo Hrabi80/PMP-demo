@@ -44,6 +44,18 @@ export function QcmBrowser({
   )
 
   const years = [...new Set(qcms.map((q) => q.year))].sort((a, b) => b - a)
+  const specialityItems = [
+    { value: "all", label: "All specialities" },
+    ...specialities.map((s) => ({ value: s.id, label: s.name })),
+  ]
+  const classLevelItems = [
+    { value: "all", label: "All levels" },
+    ...filteredClassLevels.map((cl) => ({ value: cl.id, label: cl.name })),
+  ]
+  const yearItems = [
+    { value: "all", label: "All years" },
+    ...years.map((y) => ({ value: y.toString(), label: y.toString() })),
+  ]
 
   const filtered = qcms.filter((q) => {
     if (selectedSpeciality !== "all" && q.speciality.id !== selectedSpeciality) return false
@@ -63,7 +75,7 @@ export function QcmBrowser({
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <div className="space-y-1">
             <Label className="text-sm text-muted-foreground">Speciality</Label>
-            <Select value={selectedSpeciality} onValueChange={(v) => { setSelectedSpeciality(v || "all"); setSelectedClassLevel("all") }}>
+            <Select items={specialityItems} value={selectedSpeciality} onValueChange={(v) => { setSelectedSpeciality(v || "all"); setSelectedClassLevel("all") }}>
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>
@@ -75,7 +87,7 @@ export function QcmBrowser({
           </div>
           <div className="space-y-1">
             <Label className="text-sm text-muted-foreground">Class Level</Label>
-            <Select value={selectedClassLevel} onValueChange={(v) => setSelectedClassLevel(v || "all")} disabled={selectedSpeciality === "all"}>
+            <Select items={classLevelItems} value={selectedClassLevel} onValueChange={(v) => setSelectedClassLevel(v || "all")} disabled={selectedSpeciality === "all"}>
               <SelectTrigger className="w-full">
                 <SelectValue placeholder="All levels" />
               </SelectTrigger>
@@ -87,7 +99,7 @@ export function QcmBrowser({
           </div>
           <div className="space-y-1">
             <Label className="text-sm text-muted-foreground">Year</Label>
-            <Select value={yearFilter} onValueChange={(v) => setYearFilter(v || "all")}>
+            <Select items={yearItems} value={yearFilter} onValueChange={(v) => setYearFilter(v || "all")}>
               <SelectTrigger className="w-full">
                 <SelectValue />
               </SelectTrigger>

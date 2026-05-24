@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
+import { ConfirmDialog } from "@/components/ui/confirm-dialog"
 import { Pencil, Trash2, Plus, Check, X } from "lucide-react"
 
 type Speciality = { id: string; name: string }
@@ -16,6 +17,8 @@ export function SpecialityManager({ initialSpecialities }: { initialSpecialities
   const [editingId, setEditingId] = useState<string | null>(null)
   const [editName, setEditName] = useState("")
   const [error, setError] = useState("")
+  const [specialityToDelete, setSpecialityToDelete] = useState<string | null>(null)
+  const pendingSpeciality = specialities.find((speciality) => speciality.id === specialityToDelete)
 
   async function handleCreate() {
     setError("")
@@ -39,7 +42,6 @@ export function SpecialityManager({ initialSpecialities }: { initialSpecialities
   }
 
   async function handleDelete(id: string) {
-    if (!confirm("Delete this speciality? This will also delete related class levels.")) return
     await deleteSpeciality(id)
     setSpecialities((prev) => prev.filter((s) => s.id !== id))
   }
@@ -95,7 +97,7 @@ export function SpecialityManager({ initialSpecialities }: { initialSpecialities
                   </Button>
                   <Button
                     size="icon" variant="ghost" className="h-7 w-7 text-destructive hover:text-destructive"
-                    onClick={() => handleDelete(s.id)}
+                    onClick={() => setSpecialityToDelete(s.id)}
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </Button>
@@ -107,6 +109,19 @@ export function SpecialityManager({ initialSpecialities }: { initialSpecialities
             <p className="py-4 text-center text-sm text-muted-foreground">No specialities yet.</p>
           )}
         </div>
+        <ConfirmDialog
+          open={specialityToDelete !== null}
+          onOpenChange={(open) => !open && setSpecialityToDelete(null)}
+          title="Delete this speciality?"
+          description={`This will delete ${
+            pendingSpeciality ? `"${pendingSpeciality.name}"` : "this speciality"
+          } and all related class levels. Linked QCMs may also be affected.`}
+          confirmLabel="Delete speciality"
+          onConfirm={async () => {
+            if (!specialityToDelete) return
+            await handleDelete(specialityToDelete)
+          }}
+        />
       </CardContent>
     </Card>
   )
