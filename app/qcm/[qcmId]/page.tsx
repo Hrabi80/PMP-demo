@@ -15,9 +15,5 @@ export default async function QcmTakePage({ params }: { params: Promise<{ qcmId:
 
   if (!qcm) notFound()
 
-  return (
-    <div className="mx-auto max-w-4xl">
-      <QcmPlayer qcm={qcm} />
-    </div>
-  )
+  return <QcmPlayer qcm={qcm} />
 }
